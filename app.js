@@ -85,90 +85,50 @@ function renderDashboard() {
 }
 
 function renderProgressChart(history) {
-    const canvas = document.getElementById('progressChart');
-    if (!canvas) return;
+    const chartContainer = document.querySelector('.chart-container');
+    if (!chartContainer) return;
     
-    if (window.progressChart) {
-        window.progressChart.destroy();
-    }
+    chartContainer.innerHTML = '';
     
     if (history.length === 0) {
-        canvas.style.display = 'none';
-        const parent = canvas.parentElement;
-        if (!document.getElementById('empty-chart-msg')) {
-            const msg = document.createElement('div');
-            msg.id = 'empty-chart-msg';
-            msg.style.textAlign = 'center';
-            msg.style.padding = '3rem 1rem';
-            msg.style.color = 'var(--text-muted)';
-            msg.innerHTML = '<i class="fas fa-chart-bar" style="font-size:3rem; margin-bottom:1rem; opacity:0.5;"></i><br>בצע מבחן כדי לראות את גרף ההתקדמות שלך.';
-            parent.appendChild(msg);
-        }
+        const msg = document.createElement('div');
+        msg.id = 'empty-chart-msg';
+        msg.style.textAlign = 'center';
+        msg.style.padding = '3rem 1rem';
+        msg.style.color = 'var(--text-muted)';
+        msg.innerHTML = '<i class="fas fa-chart-bar" style="font-size:3rem; margin-bottom:1rem; opacity:0.5;"></i><br>בצע מבחן כדי לראות את גרף ההתקדמות שלך.';
+        chartContainer.appendChild(msg);
         return;
-    } else {
-        canvas.style.display = 'block';
-        const emptyMsg = document.getElementById('empty-chart-msg');
-        if (emptyMsg) emptyMsg.remove();
     }
     
-    try {
-        const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-        const textColor = isDark ? '#94a3b8' : '#5f6368';
-        const gridColor = isDark ? '#334155' : '#e5e7eb';
+    // Sort history by date
+    const sorted = [...history].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
+    
+    let chartHTML = '<div class="css-chart-wrapper" style="display:flex; align-items:flex-end; gap:20px; height:250px; padding:20px 0 10px; overflow-x:auto;">';
+    
+    sorted.forEach((att, i) => {
+        const d = new Date(att.timestamp);
+        const label = `מבחן ${att.testId + 1}<br><span style="font-size:0.8rem">${d.getDate()}/${d.getMonth()+1}</span>`;
+        const score = Math.round(att.score);
+        const color = score >= 60 ? 'var(--success)' : 'var(--danger)';
+        const height = Math.max(score, 10); // Ensure the bar is visible even with low score
         
-        // Sort history by date
-        const sorted = [...history].sort((a, b) => new Date(a.timestamp) - new Date(b.timestamp));
-        const labels = sorted.map((att, i) => {
-            const d = new Date(att.timestamp);
-            return `מבחן ${att.testId + 1} (${d.getDate()}/${d.getMonth()+1})`;
-        });
-        const data = sorted.map(h => h.score);
-        const bgColors = data.map(score => score >= 60 ? 'rgba(52, 211, 153, 0.7)' : 'rgba(248, 113, 113, 0.7)');
-        
-        const ctx = canvas.getContext('2d');
-        window.progressChart = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: labels,
-                datasets: [{
-                    label: 'ציון',
-                    data: data,
-                    backgroundColor: bgColors,
-                    borderRadius: 4
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: {
-                    y: { 
-                        beginAtZero: true, 
-                        max: 100,
-                        grid: { color: gridColor },
-                        ticks: { color: textColor }
-                    },
-                    x: {
-                        grid: { display: false },
-                        ticks: { 
-                            color: textColor,
-                            autoSkip: false,
-                            maxRotation: 45,
-                            minRotation: 45
-                        }
-                    }
-                },
-                plugins: {
-                    legend: { display: false }
-                }
-            }
-        });
-    } catch (error) {
-        const parent = canvas.parentElement;
-        parent.innerHTML = `<div style="color:red; padding:20px; text-align:left; direction:ltr;">
-            <strong>Chart Error:</strong> ${error.message}<br>
-            <pre style="font-size:11px; margin-top:10px; overflow-x:auto;">${error.stack}</pre>
-        </div>`;
-    }
+        chartHTML += `
+            <div style="display:flex; flex-direction:column; align-items:center; min-width:60px; height:100%;">
+                <div style="flex-grow:1; display:flex; align-items:flex-end; width:100%; justify-content:center;">
+                    <div style="width:40px; background-color:${color}; height:${height}%; border-radius:4px 4px 0 0; display:flex; align-items:flex-start; justify-content:center; padding-top:5px; color:white; font-weight:bold; font-size:0.9rem; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
+                        ${score}
+                    </div>
+                </div>
+                <div style="margin-top:10px; text-align:center; color:var(--text-muted); font-size:0.9rem; line-height:1.2;">
+                    ${label}
+                </div>
+            </div>
+        `;
+    });
+    
+    chartHTML += '</div>';
+    chartContainer.innerHTML = chartHTML;
 }
 
 // --- Test Selection ---
