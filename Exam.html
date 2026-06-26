@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>מערכת בחינות חכמה - פיתוח יישומים</title>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="chart.js"></script>
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <nav class="sidebar">
+        <h2><i class="fas fa-graduation-cap"></i> ExamPro</h2>
+        <ul class="nav-links">
+            <li><a href="#" class="active" onclick="switchView('dashboard')"><i class="fas fa-chart-pie"></i> דשבורד</a></li>
+            <li><a href="#" onclick="switchView('tests')"><i class="fas fa-book"></i> מבחנים</a></li>
+            <li><a href="#" onclick="switchView('history')"><i class="fas fa-history"></i> היסטוריה</a></li>
+        </ul>
+        
+        <div class="user-widget">
+            <div class="level-badge" id="sb-level">1</div>
+            <div style="font-weight:bold;">רמה נוכחית</div>
+            <div style="color:var(--text-muted); font-size:0.9rem;" id="sb-xp">0 XP</div>
+            <div class="xp-bar"><div class="xp-progress" id="sb-xp-progress" style="width:0%;"></div></div>
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <header class="top-header">
+            <div>
+                <h1 style="font-weight: 800;">שלום, משתמש 👋</h1>
+                <p style="color: var(--text-muted);">המשך ללמוד ולשפר את הביצועים שלך.</p>
+            </div>
+            <button class="theme-toggle" onclick="toggleTheme()">
+                <i class="fas fa-moon"></i>
+            </button>
+        </header>
+
+        <!-- View: Dashboard -->
+        <section id="view-dashboard" class="view-section active">
+            <div class="kpi-grid">
+                <div class="card kpi-card">
+                    <div>
+                        <div class="kpi-label">מבחנים שבוצעו</div>
+                        <div class="kpi-value" id="kpi-exams">0</div>
+                    </div>
+                    <div class="kpi-icon"><i class="fas fa-file-alt"></i></div>
+                </div>
+                <div class="card kpi-card">
+                    <div>
+                        <div class="kpi-label">שאלות שנפתרו</div>
+                        <div class="kpi-value" id="kpi-questions">0</div>
+                    </div>
+                    <div class="kpi-icon" style="color: var(--success); background: var(--success-bg);"><i class="fas fa-check-double"></i></div>
+                </div>
+                <div class="card kpi-card">
+                    <div>
+                        <div class="kpi-label">ממוצע ציונים</div>
+                        <div class="kpi-value" id="kpi-avg-score">0</div>
+                    </div>
+                    <div class="kpi-icon" style="color: #f59e0b; background: #fef3c7;"><i class="fas fa-star"></i></div>
+                </div>
+                <div class="card kpi-card">
+                    <div>
+                        <div class="kpi-label">רצף למידה (ימים)</div>
+                        <div class="kpi-value" id="kpi-streak">0</div>
+                    </div>
+                    <div class="kpi-icon" style="color: #ef4444; background: #fee2e2;"><i class="fas fa-fire"></i></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>התקדמות ציונים</h3>
+                <div class="chart-container">
+                    <canvas id="progressChart"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Tests Selection -->
+        <section id="view-tests" class="view-section">
+            <h2 style="margin-bottom: 1.5rem;">בחר מבחן לתרגול</h2>
+            <div id="test-selection-grid" class="test-grid">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+        <!-- View: History -->
+        <section id="view-history" class="view-section">
+            <h2 style="margin-bottom: 1.5rem;">היסטוריית מבחנים</h2>
+            <div class="card table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>תאריך</th>
+                            <th>נושא המבחן</th>
+                            <th>ציון</th>
+                            <th>זמן</th>
+                            <th>סטטוס</th>
+                            <th>פעולות</th>
+                        </tr>
+                    </thead>
+                    <tbody id="history-tbody">
+                        <!-- Dynamically populated -->
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- View: Exam Running -->
+        <section id="view-exam" class="view-section">
+            <div class="card">
+                <div class="exam-header">
+                    <h2 id="exam-title-text">מבחן</h2>
+                    <div class="timer" id="exam-timer">
+                        <i class="fas fa-clock"></i> 00:00:00
+                    </div>
+                </div>
+                
+                <div class="progress-container"><div class="progress-bar" id="exam-progress-bar"></div></div>
+                <div class="q-grid" id="q-grid"></div>
+
+                <div style="margin-top:2rem;">
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                        <div class="question-text" id="question-text"></div>
+                    </div>
+                    <div id="options-container"></div>
+                </div>
+
+                <div class="nav-buttons">
+                    <button class="btn btn-outline" id="btn-prev" onclick="changeQuestion(-1)">הקודם</button>
+                    <button class="btn btn-primary" style="background:var(--danger);" id="btn-finish" onclick="finishExam()">סיום מבחן והגשה</button>
+                    <button class="btn btn-primary" id="btn-next" onclick="changeQuestion(1)">הבא</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- View: Review Mode -->
+        <section id="view-review" class="view-section">
+            <button class="btn btn-outline" onclick="switchView('history')" style="margin-bottom:1.5rem;">
+                <i class="fas fa-arrow-right"></i> חזור להראות היסטוריה
+            </button>
+            <div class="card" style="text-align:center;">
+                <h1 style="color:var(--primary); font-size:3rem; margin-bottom:1rem;" id="review-score">ציון: 0</h1>
+                <p id="review-stats" style="color:var(--text-muted); font-size:1.1rem;"></p>
+            </div>
+            <h3 style="margin-bottom:1.5rem;">פירוט התשובות:</h3>
+            <div id="review-container">
+                <!-- Dynamically populated -->
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Scripts -->
+    <script src="data.js"></script>
+    <script src="storage.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>
