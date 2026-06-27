@@ -136,7 +136,7 @@ function renderTestSelection() {
     const container = document.getElementById('test-selection-grid');
     container.innerHTML = '';
     
-    exams.forEach((test, idx) => {
+    exams.slice(0, 4).forEach((test, idx) => {
         const title = test[0]?.topic || `מבחן ${idx + 1}`;
         const card = document.createElement('div');
         card.className = 'card test-card';
@@ -148,6 +148,44 @@ function renderTestSelection() {
         `;
         container.appendChild(card);
     });
+
+    // Add comprehensive exam card
+    const compCard = document.createElement('div');
+    compCard.className = 'card test-card';
+    compCard.style.border = '2px solid var(--primary)';
+    compCard.style.backgroundColor = 'var(--bg-secondary)';
+    compCard.innerHTML = `
+        <div class="test-icon"><i class="fas fa-star" style="color: #f59e0b;"></i></div>
+        <h3>מבחן מסכם</h3>
+        <p style="color: var(--text-muted); margin: 10px 0;">20 שאלות אקראיות | 120 דקות</p>
+        <button class="btn btn-primary" style="background: var(--primary); font-weight: bold;" onclick="startComprehensiveExam()">התחל מבחן מסכם</button>
+    `;
+    container.appendChild(compCard);
+}
+
+// --- Comprehensive Exam ---
+function startComprehensiveExam() {
+    let comprehensiveTest = [];
+    
+    exams.slice(0, 4).forEach((exam) => {
+        let shuffled = [...exam].sort(() => 0.5 - Math.random());
+        comprehensiveTest = comprehensiveTest.concat(shuffled.slice(0, 5));
+    });
+    
+    comprehensiveTest.sort(() => 0.5 - Math.random());
+    comprehensiveTest = JSON.parse(JSON.stringify(comprehensiveTest));
+    
+    if (comprehensiveTest.length > 0) {
+        comprehensiveTest[0].topic = "מבחן מסכם (20 שאלות)";
+    }
+    
+    if (exams.length === 4) {
+        exams.push(comprehensiveTest);
+    } else {
+        exams[4] = comprehensiveTest;
+    }
+    
+    startExam(4);
 }
 
 // --- Exam Execution ---
