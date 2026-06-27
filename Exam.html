@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="he" dir="rtl" data-theme="light">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,22 +10,28 @@
     <!-- Custom CSS -->
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
 
     <!-- Sidebar -->
     <nav class="sidebar">
         <h2><i class="fas fa-graduation-cap"></i> ExamPro</h2>
         <ul class="nav-links">
-            <li><a href="#" class="active" onclick="switchView('dashboard')"><i class="fas fa-chart-pie"></i> דשבורד</a></li>
+            <li><a href="#" class="active" onclick="switchView('dashboard')"><i class="fas fa-chart-pie"></i> דשבורד</a>
+            </li>
             <li><a href="#" onclick="switchView('tests')"><i class="fas fa-book"></i> מבחנים</a></li>
+            <li><a href="#" onclick="switchView('flashcards')"><i class="fas fa-clone"></i> כרטיסיות למידה</a></li>
+            <li><a href="#" onclick="switchView('presentations')"><i class="fas fa-file-pdf"></i> מצגות</a></li>
             <li><a href="#" onclick="switchView('history')"><i class="fas fa-history"></i> היסטוריה</a></li>
         </ul>
-        
+
         <div class="user-widget">
             <div class="level-badge" id="sb-level">1</div>
             <div style="font-weight:bold;">רמה נוכחית</div>
             <div style="color:var(--text-muted); font-size:0.9rem;" id="sb-xp">0 XP</div>
-            <div class="xp-bar"><div class="xp-progress" id="sb-xp-progress" style="width:0%;"></div></div>
+            <div class="xp-bar">
+                <div class="xp-progress" id="sb-xp-progress" style="width:0%;"></div>
+            </div>
         </div>
     </nav>
 
@@ -55,7 +62,8 @@
                         <div class="kpi-label">שאלות שנפתרו</div>
                         <div class="kpi-value" id="kpi-questions">0</div>
                     </div>
-                    <div class="kpi-icon" style="color: var(--success); background: var(--success-bg);"><i class="fas fa-check-double"></i></div>
+                    <div class="kpi-icon" style="color: var(--success); background: var(--success-bg);"><i
+                            class="fas fa-check-double"></i></div>
                 </div>
                 <div class="card kpi-card">
                     <div>
@@ -120,8 +128,10 @@
                         <i class="fas fa-clock"></i> 00:00:00
                     </div>
                 </div>
-                
-                <div class="progress-container"><div class="progress-bar" id="exam-progress-bar"></div></div>
+
+                <div class="progress-container">
+                    <div class="progress-bar" id="exam-progress-bar"></div>
+                </div>
                 <div class="q-grid" id="q-grid"></div>
 
                 <div style="margin-top:2rem;">
@@ -133,7 +143,8 @@
 
                 <div class="nav-buttons">
                     <button class="btn btn-outline" id="btn-prev" onclick="changeQuestion(-1)">הקודם</button>
-                    <button class="btn btn-primary" style="background:var(--danger);" id="btn-finish" onclick="finishExam()">סיום מבחן והגשה</button>
+                    <button class="btn btn-primary" style="background:var(--danger);" id="btn-finish"
+                        onclick="finishExam()">סיום מבחן והגשה</button>
                     <button class="btn btn-primary" id="btn-next" onclick="changeQuestion(1)">הבא</button>
                 </div>
             </div>
@@ -154,6 +165,70 @@
             </div>
         </section>
 
+        <!-- View: Flashcards -->
+        <section id="view-flashcards" class="view-section">
+            <h2 style="margin-bottom: 1.5rem;">כרטיסיות למידה</h2>
+
+            <div class="flashcard-controls">
+                <select id="flashcard-topic-select" onchange="loadFlashcards()" class="btn btn-outline"
+                    style="background:#6366f1; border:1px solid var(--border); font-family: 'Heebo', sans-serif;">
+                    <option value="all">כל הנושאים (מעורבב)</option>
+                    <option value="0">מבוא, ארכיטקטורה ו-UI</option>
+                    <option value="1">תהליכים, פרגמנטים ושירותים</option>
+                    <option value="2">מסדי נתונים, Room ו-MVVM</option>
+                    <option value="3">שירותי ענן (Firebase) ו-mHealth</option>
+                </select>
+                <div style="font-weight:bold; color:var(--text-muted);" id="flashcard-counter">0 / 0</div>
+            </div>
+
+            <div class="flashcard-container" id="fc-container">
+                <div class="flashcard" id="current-flashcard" onclick="flipFlashcard()">
+                    <div class="flashcard-inner" id="flashcard-inner">
+                        <div class="flashcard-front">
+                            <div class="flashcard-tag" id="fc-tag">נושא</div>
+                            <h3 id="fc-question" style="font-size: 1.5rem; margin-top: 20px;">טוען שאלה...</h3>
+                            <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 30px;"><i
+                                    class="fas fa-sync-alt"></i> לחץ על הכרטיסייה כדי לראות את התשובה</p>
+                        </div>
+                        <div class="flashcard-back">
+                            <h3 style="color:var(--success); margin-bottom: 15px; font-size:1.2rem;"><i
+                                    class="fas fa-check-circle"></i> תשובה נכונה:</h3>
+                            <p id="fc-answer" style="font-size: 1.3rem; margin-bottom: 20px;"></p>
+                            <div class="explanation-box" id="fc-explanation"
+                                style="display:block; text-align:right; font-size: 1rem; border-right: 4px solid var(--primary); padding-right:15px; background:var(--bg-main);">
+                                הסבר...
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="nav-buttons" style="justify-content: center; gap: 20px; margin-top: 30px;">
+                <button class="btn btn-outline" onclick="prevFlashcard()"><i class="fas fa-arrow-right"></i>
+                    הקודם</button>
+                <button class="btn btn-primary" onclick="nextFlashcard()">הבא <i class="fas fa-arrow-left"></i></button>
+            </div>
+        </section>
+
+        <!-- View: Presentations -->
+        <section id="view-presentations" class="view-section">
+            <h2 style="margin-bottom: 1.5rem;">מצגות וחומרי עזר</h2>
+            <div class="presentations-layout">
+                <div class="presentations-list" id="presentations-list">
+                    <!-- Loaded dynamically -->
+                </div>
+                <div class="presentation-viewer card" id="presentation-viewer">
+                    <div id="pdf-placeholder"
+                        style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%; color:var(--text-muted);">
+                        <i class="fas fa-file-pdf" style="font-size: 4rem; margin-bottom:1rem; opacity:0.5;"></i>
+                        <p>בחר מצגת מהרשימה כדי לצפות בה</p>
+                    </div>
+                    <iframe id="pdf-iframe" src=""
+                        style="display:none; width:100%; height:100%; border:none; border-radius:8px;"></iframe>
+                </div>
+            </div>
+        </section>
+
     </main>
 
     <!-- Scripts -->
@@ -161,4 +236,5 @@
     <script src="storage.js"></script>
     <script src="app.js"></script>
 </body>
+
 </html>

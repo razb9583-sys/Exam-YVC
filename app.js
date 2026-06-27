@@ -53,6 +53,8 @@ function switchView(viewId) {
     if (viewId === 'dashboard') renderDashboard();
     if (viewId === 'history') renderHistory();
     if (viewId === 'tests') renderTestSelection();
+    if (viewId === 'flashcards' && typeof loadFlashcards === 'function' && (!currentFlashcardsList || currentFlashcardsList.length === 0)) loadFlashcards();
+    if (viewId === 'presentations' && typeof renderPresentationsList === 'function') renderPresentationsList();
 }
 
 // Sidebar updates
@@ -428,4 +430,113 @@ function showReviewMode(attemptId) {
         card.innerHTML = html;
         reviewContainer.appendChild(card);
     });
+}
+
+// --- Flashcards ---
+let currentFlashcardsList = [];
+let currentFlashcardIndex = 0;
+
+function loadFlashcards() {
+    const topicSelect = document.getElementById('flashcard-topic-select').value;
+    currentFlashcardsList = [];
+    
+    if (topicSelect === 'all') {
+        exams.slice(0, 4).forEach(exam => {
+            currentFlashcardsList = currentFlashcardsList.concat(exam);
+        });
+        currentFlashcardsList.sort(() => 0.5 - Math.random());
+    } else {
+        const idx = parseInt(topicSelect);
+        currentFlashcardsList = [...exams[idx]].sort(() => 0.5 - Math.random());
+    }
+    
+    currentFlashcardIndex = 0;
+    renderCurrentFlashcard();
+}
+
+function renderCurrentFlashcard() {
+    const cardElement = document.getElementById('current-flashcard');
+    cardElement.classList.remove('is-flipped');
+    
+    if (currentFlashcardsList.length === 0) return;
+    
+    document.getElementById('flashcard-counter').innerText = `${currentFlashcardIndex + 1} / ${currentFlashcardsList.length}`;
+    
+    const q = currentFlashcardsList[currentFlashcardIndex];
+    document.getElementById('fc-tag').innerText = q.topic || 'שאלה';
+    document.getElementById('fc-question').innerText = q.q;
+    
+    const correctAnswerText = q.opts[q.a];
+    document.getElementById('fc-answer').innerText = correctAnswerText;
+    document.getElementById('fc-explanation').innerHTML = `<strong>הסבר:</strong> ${q.explanation || 'אין הסבר מפורט.'}`;
+}
+
+function flipFlashcard() {
+    document.getElementById('current-flashcard').classList.toggle('is-flipped');
+}
+
+function nextFlashcard() {
+    if (currentFlashcardIndex < currentFlashcardsList.length - 1) {
+        currentFlashcardIndex++;
+        renderCurrentFlashcard();
+    }
+}
+
+function prevFlashcard() {
+    if (currentFlashcardIndex > 0) {
+        currentFlashcardIndex--;
+        renderCurrentFlashcard();
+    }
+}
+
+// --- Presentations ---
+const presentationsData = [
+    { title: "מצגת 1 - מבוא, ארכיטקטורה ו-UI", file: "pres_1.PDF" },
+    { title: "מצגת 2 - תהליכים, פרגמנטים ושירותים (חלק א')", file: "pres_2.PDF" },
+    { title: "מצגת 3 - תהליכים, פרגמנטים ושירותים (חלק ב')", file: "pres_3.PDF" },
+    { title: "מצגת 4 - מסדי נתונים, Room ו-MVVM (חלק א')", file: "pres_4.PDF" },
+    { title: "מצגת 5 - מסדי נתונים, Room ו-MVVM (חלק ב')", file: "pres_5.PDF" },
+    { title: "מצגת 6 - שירותי ענן (Firebase)", file: "pres_6.PDF" },
+    { title: "מצגת 7 - שירותי ענן (Firebase - מתקדם)", file: "pres_7.PDF" },
+    { title: "מצגת 8 - mHealth ואתיקה רפואית", file: "pres_8.PDF" },
+    { title: "מצגת 9 - סיכום ופרויקטים", file: "pres_9.PDF" },
+    { title: "שאלות לדוגמא למבחן", file: "שאלות לדוגמא.PDF" }
+];
+
+function renderPresentationsList() {
+    const listContainer = document.getElementById('presentations-list');
+    
+    // Only render if empty to preserve active state
+    if (listContainer.children.length > 0) return;
+    
+    listContainer.innerHTML = '';
+    
+    presentationsData.forEach((pres, idx) => {
+        const item = document.createElement('div');
+        item.className = 'presentation-item';
+        item.innerHTML = `
+            <i class="fas fa-file-pdf" style="font-size: 1.5rem; color: var(--danger);"></i>
+            <div style="flex: 1;">
+                <h4 style="margin: 0; font-size: 1rem;">${pres.title}</h4>
+                <div class="text-muted" style="font-size: 0.8rem; margin-top: 4px;">קובץ: ${pres.file}</div>
+            </div>
+            <i class="fas fa-chevron-left text-muted"></i>
+        `;
+        
+        item.onclick = () => {
+            document.querySelectorAll('.presentation-item').forEach(el => el.classList.remove('active'));
+            item.classList.add('active');
+            loadPresentation(pres.file);
+        };
+        
+        listContainer.appendChild(item);
+    });
+}
+
+function loadPresentation(filename) {
+    document.getElementById('pdf-placeholder').style.display = 'none';
+    const iframe = document.getElementById('pdf-iframe');
+    iframe.style.display = 'block';
+    
+    iframe.src = `presentations/${encodeURIComponent(filename)}`;
 }
